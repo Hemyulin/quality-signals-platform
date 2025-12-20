@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    name: foundation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Manual checkout (no marketplace actions)
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf ./* ./.git || true
+          git init
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${{ github.sha }}"
+          git checkout --detach FETCH_HEAD
+
+      - name: Git whitespace check
+        run: git diff --check
+
+      - name: Verify repository structure
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          required_paths=(
+            "README.md"
+            "apps"
+            "apps/api"
+            "apps/web"
+            "infra"
+            "infra/docker"
+            "docs"
+          )
+
+          for p in "${required_paths[@]}"; do
+            if [ ! -e "$p" ]; then
+              echo "Missing required path: $p"
+              exit 1
+            fi
+          done
+
+          echo "Repository structure OK"
