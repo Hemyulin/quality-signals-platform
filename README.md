@@ -50,3 +50,4 @@ docs/         # Architecture notes and documentation
 
 🚧 Bootstrapping / foundation phase
 Structure, CI skeleton, and architectural decisions are established before feature development.
+
