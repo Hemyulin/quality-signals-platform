@@ -1,0 +1,33 @@
+name: CI E2E
+
+on:
+  pull_request:
+    types: [labeled, synchronize, reopened]
+
+jobs:
+  api_e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: contains(github.event.pull_request.labels.*.name, 'run-e2e')
+
+    steps:
+      - name: Manual checkout
+        run: |
+          set -euo pipefail
+          git init
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${{ github.sha }}"
+          git checkout --detach FETCH_HEAD
+
+      - name: Show tool versions
+        run: |
+          node --version
+          npm --version
+
+      - name: Install deps
+        working-directory: apps/api
+        run: npm ci
+
+      - name: E2E tests
+        working-directory: apps/api
+        run: npm run test:e2e

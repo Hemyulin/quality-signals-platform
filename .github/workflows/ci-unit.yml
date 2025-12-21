@@ -1,0 +1,32 @@
+name: CI Unit
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  api_unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Manual checkout
+        run: |
+          set -euo pipefail
+          git init
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${{ github.sha }}"
+          git checkout --detach FETCH_HEAD
+
+      - name: Show tool versions
+        run: |
+          node --version
+          npm --version
+
+      - name: Install deps
+        working-directory: apps/api
+        run: npm ci
+
+      - name: Unit tests
+        working-directory: apps/api
+        run: npm test
