@@ -16,10 +16,20 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
+  interface HealthResponse {
+    status: string;
+    uptimeSeconds: number;
+  }
+
   it('/health (GET)', () => {
     return request(app.getHttpServer())
       .get('/health')
       .expect(200)
-      .expect({ status: 'ok' });
+      .expect((res) => {
+        const body = res.body as HealthResponse;
+
+        expect(body.status).toBe('ok');
+        expect(typeof body.uptimeSeconds).toBe('number');
+      });
   });
 });
