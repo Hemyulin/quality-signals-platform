@@ -7,7 +7,7 @@ on:
 
 jobs:
   e2e_gate:
-    name: e2e gate
+    name: e2e_gate
     runs-on: ubuntu-latest
     timeout-minutes: 2
 
@@ -24,7 +24,7 @@ jobs:
           }
 
   api_e2e:
-    name: api e2e
+    name: api_e2e
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: e2e_gate
