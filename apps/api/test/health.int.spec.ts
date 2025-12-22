@@ -1,13 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
 
-describe('AppController (e2e)', () => {
-  let app: INestApplication<App>;
+describe('Health endpoint (int)', () => {
+  let app: INestApplication;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -16,20 +15,21 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
+  afterAll(async () => {
+    await app.close();
+  });
+
   interface HealthResponse {
     status: string;
     uptimeSeconds: number;
   }
 
-  it('/health (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/health')
-      .expect(200)
-      .expect((res) => {
-        const body = res.body as HealthResponse;
+  it('GET /health returns status and uptime', async () => {
+    const res = await request(app.getHttpServer()).get('/health').expect(200);
 
-        expect(body.status).toBe('ok');
-        expect(typeof body.uptimeSeconds).toBe('number');
-      });
+    const body = res.body as HealthResponse;
+
+    expect(body.status).toBe('ok');
+    expect(typeof body.uptimeSeconds).toBe('number');
   });
 });
