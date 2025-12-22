@@ -2,16 +2,38 @@ name: CI E2E
 
 on:
   pull_request:
-    types: [labeled, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  workflow_dispatch:
 
 jobs:
   api_e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: contains(github.event.pull_request.labels.*.name, 'run-e2e')
 
     steps:
+      - name: Decide whether to run e2e
+        id: gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          labels='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          echo "PR labels: $labels"
+          if echo "$labels" | grep -q '"run-e2e"'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "E2E enabled via label."
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "E2E skipped (add label 'run-e2e' to enable)."
+          fi
+
+      - name: Stop early if e2e not requested
+        if: steps.gate.outputs.run != 'true'
+        run: |
+          echo "Skipping e2e by policy."
+          exit 0
+
       - name: Manual checkout
+        if: steps.gate.outputs.run == 'true'
         run: |
           set -euo pipefail
           git init
@@ -20,14 +42,17 @@ jobs:
           git checkout --detach FETCH_HEAD
 
       - name: Show tool versions
+        if: steps.gate.outputs.run == 'true'
         run: |
           node --version
           npm --version
 
       - name: Install deps
+        if: steps.gate.outputs.run == 'true'
         working-directory: apps/api
         run: npm ci
 
-      - name: E2E tests
+      - name: Run e2e tests
+        if: steps.gate.outputs.run == 'true'
         working-directory: apps/api
         run: npm run test:e2e
