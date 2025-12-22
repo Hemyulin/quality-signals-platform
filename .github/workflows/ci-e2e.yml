@@ -1,0 +1,52 @@
+name: CI E2E
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  workflow_dispatch:
+
+jobs:
+  e2e_gate:
+    name: e2e_gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Require run-e2e label to merge
+        shell: bash
+        run: |
+          set -euo pipefail
+          labels='${{ toJson(github.event.pull_request.labels.*.name) }}'
+          echo "PR labels: $labels"
+          echo "$labels" | grep -q '"run-e2e"' || {
+            echo "Missing required label: run-e2e"
+            exit 1
+          }
+
+  api_e2e:
+    name: api_e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: e2e_gate
+
+    steps:
+      - name: Manual checkout
+        run: |
+          set -euo pipefail
+          git init
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${{ github.sha }}"
+          git checkout --detach FETCH_HEAD
+
+      - name: Show tool versions
+        run: |
+          node --version
+          npm --version
+
+      - name: Install deps
+        working-directory: apps/api
+        run: npm ci
+
+      - name: Run e2e tests
+        working-directory: apps/api
+        run: npm run test:e2e
