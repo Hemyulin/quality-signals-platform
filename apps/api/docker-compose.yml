@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: qsp
+      POSTGRES_PASSWORD: qsp
+      POSTGRES_DB: qsp
+    ports:
+      - '5432:5432'
+    volumes:
+      - qsp_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U qsp -d qsp']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  qsp_pg: {}
