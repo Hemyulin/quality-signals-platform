@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.0",
@@ -55,5 +56,8 @@
     "unplugin-swc": "^1.5.9",
     "vite-tsconfig-paths": "^6.0.3",
     "vitest": "^4.0.16"
+  },
+  "volta": {
+    "node": "22.9.0"
   }
 }
