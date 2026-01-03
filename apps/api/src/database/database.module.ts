@@ -35,6 +35,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
           database,
           synchronize: false,
           autoLoadEntities: false,
+          manualInitialization: true,
+          retryAttempts: 0,
+          retryDelay: 0,
+          extra: {
+            connectionTimeoutMillis: 1000,
+          },
         };
       },
     }),
