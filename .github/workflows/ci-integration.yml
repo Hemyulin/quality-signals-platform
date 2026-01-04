@@ -1,0 +1,77 @@
+name: CI Integration
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  api_integration:
+    name: api_integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: qsp
+          POSTGRES_PASSWORD: qsp
+          POSTGRES_DB: qsp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U qsp -d qsp"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=20
+
+    steps:
+      - name: Manual checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git init
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${{ github.sha }}"
+          git checkout --detach FETCH_HEAD
+
+      - name: Install Volta + Node (repo pinned)
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://get.volta.sh | bash -s -- --skip-setup
+          echo "$HOME/.volta/bin" >> $GITHUB_PATH
+          volta install node@22.9.0
+          node --version
+          npm --version
+
+      - name: Install deps
+        working-directory: apps/api
+        run: npm ci
+
+      - name: Wait for Postgres port
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..30}; do
+            (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1 && exit 0
+            sleep 1
+          done
+          echo "Postgres not reachable on 5432" >&2
+          exit 1
+
+      - name: Integration tests
+        working-directory: apps/api
+        env:
+          DB_HOST: localhost
+          DB_PORT: "5432"
+          DB_USER: qsp
+          DB_PASSWORD: qsp
+          DB_NAME: qsp
+          PORT: "3000"
+          APP_VERSION: ci
+        run: npm run test:int
