@@ -11,6 +11,10 @@ export class HealthService {
 
   async getReadiness() {
     try {
+      if (!this.dataSource.isInitialized) {
+        await this.dataSource.initialize();
+      }
+
       await this.dataSource.query('SELECT 1');
       return { status: 'ok' };
     } catch {
