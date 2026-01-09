@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
 
 export function requestIdMiddleware(
   req: Request,
@@ -6,10 +7,10 @@ export function requestIdMiddleware(
   next: NextFunction,
 ) {
   const incoming = req.header('x-request-id');
+  const reqId =
+    incoming && incoming.trim().length > 0 ? incoming : randomUUID();
 
-  if (incoming) {
-    res.setHeader('x-request-id', incoming);
-  }
+  res.setHeader('x-request-id', reqId);
 
   next();
 }
