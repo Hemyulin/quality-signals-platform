@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
 import { AppController } from './app.controller';
@@ -7,6 +7,7 @@ import { HealthController } from './health.controller';
 import { HealthService } from './health.service';
 import { VersionController } from './version.controller';
 import { VersionService } from './version.service';
+import { requestIdMiddleware } from './infra/request-id.middleware';
 
 @Module({
   imports: [
@@ -19,4 +20,8 @@ import { VersionService } from './version.service';
   controllers: [AppController, HealthController, VersionController],
   providers: [AppService, HealthService, VersionService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(requestIdMiddleware).forRoutes('*');
+  }
+}
